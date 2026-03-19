@@ -10,6 +10,8 @@ const showAddUserDialog = ref(false)
 const showAddRoleDialog = ref(false)
 const showAddEquipmentDialog = ref(false)
 const showEditUserDialog = ref(false)
+const showEditEquipmentDialog = ref(false)
+const showEditRoleDialog = ref(false)
 
 const rules = {
     required: value => !!value || 'Required.',
@@ -71,6 +73,7 @@ async function addUser(){
       throw err
    } 
 }
+
 //edit user
 function editUser(data){
     userIdNo.value = data.id
@@ -108,15 +111,24 @@ async function updateUser(){
    } 
 }
 
+//roles
+const roles = ref(null)
+const roleName = ref(null)
+const description = ref(null)
+const roleIdNo = ref(null)
+// const abilities = ref(null)
+// const noOfUsers = ref(null)
+
 
 //equipment
 const equipment = ref(null)
 const equipmentName = ref(null)
-const usage = ref(null)
-const model_no = ref(null)
 const equipmentValue = ref(null)
+const model_no = ref(null)
 const status = ref(null)
-
+const usage = ref(null)
+const equipmentIdNo = ref(null)
+//fetch equipment
 async function fetchEquipment(){
 
     try {
@@ -135,12 +147,13 @@ async function fetchEquipment(){
 //add equipment
 async function addEquipment(){
     const formData = new FormData()
-    formData.append("name", equipmentName.value,);
+    formData.append("name", equipmentName.value);
     formData.append("usage", usage.value);
-    formData.append("model_no", modelNo.value);
+    formData.append("model_no",model_no.value);
     formData.append("value", equipmentValue.value);
     formData.append("status", status.value);
     
+
    try {
       await api.post('saveEquipment', formData,
          { headers: { 'Authorization': `Bearer ${token}` } })
@@ -151,26 +164,53 @@ async function addEquipment(){
             fetchEquipment();
         })
    } catch (err) {
-      error.value = err.response?.data?.message || 'Creating user failed'
+      error.value = err.response?.data?.message || 'Creating equipment failed'
       throw err
    } 
 }
 
-//roles
-const roles = ref(null)
-const roleName = ref(null)
-const description = ref(null)
-const created_at = ref(null)
-const updated_at = ref(null)
+//edit equipment
+function editEquipment(data){
+    equipmentIdNo.value = data.id
+    equipmentName.value = data.name
+    usage.value = data.usage
+    model_no.value = data.model_no
+    equipmentValue.value = data.value
+    status.value = data.status
+    showEditEquipmentDialog.value = true
+}
+async function updateEquipment(){
+    const formData = new FormData()
+    formData.append("name", equipmentName.value);
+    formData.append("usage", usage.value);
+    formData.append("model_no",model_no.value);
+    formData.append("value", equipmentValue.value);
+    formData.append("status", status.value);
+    
 
+   try {
+      await api.post('updateEquipment/' + equipmentIdNo.value, formData,
+         { headers: { 'Authorization': `Bearer ${token}` } })
+         .then(function (response) {
+            error.value = ''
+            loading.value = false
+            close()
+            fetchEquipment();
+        })
+   } catch (err) {
+      error.value = err.response?.data?.message || 'Creating screening data failed'
+      throw err
+   } 
+}
 
+//fetch role
 async function fetchRole(){
 
     try {
         await api.get('getRoles', { headers: { 'Authorization': `Bearer ${token}` } })
         .then(function (response) {
             if(response.data){
-                role.value = response.data
+                roles.value = response.data
             }
         })
     } catch (err) {
@@ -183,10 +223,12 @@ async function fetchRole(){
 async function addRole(){
     const formData = new FormData()
     formData.append("name", roleName.value);
-    formData.append("description", descripltion.value);
-    formData.append("created_at", created_at.value);
-    formData.append("updated_at", updated_at.value);
+    formData.append("description", description.value);
+    // formData.append("abilities", abilities.value);
+    // formData.append("noOfUsers", noOfUsers.value);
     
+
+
    try {
       await api.post('saveRole', formData,
          { headers: { 'Authorization': `Bearer ${token}` } })
@@ -197,10 +239,36 @@ async function addRole(){
             fetchRole();
         })
    } catch (err) {
-      error.value = err.response?.data?.message || 'Creating user failed'
+      error.value = err.response?.data?.message || 'Creating role failed'
       throw err
    } 
 }
+//edit role
+function editRole(data){
+    roleIdNo.value = data.id
+    roleName.value = data.name
+    description.value = data.description
+    showEditRoleDialog.value = true
+}
+async function updateRole(){
+    const formData = new FormData()
+    formData.append("name", roleName.value);
+    formData.append("description", description.value);
+
+   try {
+      await api.post('updateRole' + roleIdNo.value, formData,
+         { headers: { 'Authorization': `Bearer ${token}` } })
+         .then(function (response) {
+            error.value = ''
+            loading.value = false
+            close()
+            fetchRole();
+        })
+   } catch (err) {
+      error.value = err.response?.data?.message || 'Creating screening data failed'
+      throw err
+   } 
+}    
 
 
 //clear reactive model values
@@ -208,6 +276,9 @@ function close(){
     showAddUserDialog.value = false
     showEditUserDialog.value = false
     showAddEquipmentDialog.value = false
+    showEditEquipmentDialog = false
+    showAddRoleDialog.value = false
+    showEditRoleDialog.value = false
     fullName.value = null
     firstName.value = null
     lastName.value = null
@@ -217,25 +288,28 @@ function close(){
     gender.value = null
     gymLocation.value = null
     userRole.value=null
+    userIdNo.value=null
 
     //equipment
-    equipmetName.value = null
+    equipmentName.value = null
     usage.value = null
-    modelNo.value = null
+    model_no.value = null
     equipmentValue.value = null
     status.value = null
-
+    equipmentIdNo = null
     //role
-    roleName.value =null
+    roleName.value = null
     description.value = null
-    created_at.value = null
-    updated_at.value = null
+    roleIdNo = null
+    // abilities.value = null
+    // noOfUsers.value = null
 }
 
 onMounted(() => {
     fetchUsers();
     fetchEquipment();
     fetchRole();
+
 });
 
 
@@ -329,26 +403,32 @@ onMounted(() => {
                     </div>
                     <div v-else>
                         <v-container>
+                            <v-row>
+                            <v-col cols="12" md="12" sm="12" align="right" >
+                                <v-btn class="ma-2" color="blue-darken-2" icon="mdi-plus" @click="showAddRoleDialog = true"></v-btn>
+                            </v-col>
+                            </v-row>
                              <v-row>
                                 <v-col>
                                     <v-table class="border">
                                         <thead>
                                             <tr>
-                                                <th class="text-left"> Name</th>
-                                                <th class="text-left"> Descriprion </th>
-                                                <th class="text-left"> Created_at</th>
-                                                 <th class="text-left"> Updated_at</th>
+                                                <th class="text-left"> Name </th>
+                                                <th class="text-left">Description</th>
+                                                <!-- <th class="text-left"> Abilities </th>
+                                                <th class="text-left"> No of Users </th> -->
                                                 <th class="text-center" colspan="3"> Action </th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr v-for="item in roles" :key="item.id" >
                                                 <td>{{ item.name }}</td>
-                                                <td>{{ item.description }}</td>
-                                                <td>{{ item.created_at }}</td>
-                                                <td>{{ item.updated_at }}</td>
+                                                 <td>{{ item.description }}</td>
+
+                                                <!-- <td>{{ item.abilities }}</td>
+                                                <td>{{ item.noOfUsers }}</td> -->
                                                 <td v-if="item.deleted_at == null">
-                                                    <v-btn color="primary" size="small" @click="editRole(item)"><v-icon icon="mdi-pencil" ></v-icon> Edit User</v-btn>
+                                                    <v-btn color="primary" size="small" @click="editRole(item)"><v-icon icon="mdi-pencil" ></v-icon> Edit Role</v-btn>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -373,9 +453,9 @@ onMounted(() => {
                     <div v-else>
                         <v-container>
                             <v-row>
-                              <v-col cols="12" md="12" sm="12" align="right">
-                                    <v-btn class="ma-2" color="blue-darken-2" icon="mdi-plus" @click="showAddEquipmentDialog = true"></v-btn>
-                             </v-col>
+                            <v-col cols="12" md="12" sm="12" align="right" >
+                                <v-btn class="ma-2" color="blue-darken-2" icon="mdi-plus" @click="showAddEquipmentDialog = true"></v-btn>
+                            </v-col>
                             </v-row>
                              <v-row>
                                 <v-col>
@@ -398,7 +478,7 @@ onMounted(() => {
                                                 <td>{{ item.usage }}</td>
                                                 <td>{{ item.status }}</td>
                                                 <td v-if="item.deleted_at == null">
-                                                    <v-btn color="primary" size="small" @click="editEquipment(item)"><v-icon icon="mdi-pencil" ></v-icon> Edit User</v-btn>
+                                                    <v-btn color="primary" size="small" @click="editEquipment(item)"><v-icon icon="mdi-pencil" ></v-icon> Edit Equipment</v-btn>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -482,7 +562,7 @@ onMounted(() => {
                     </v-card>
                 </v-form>
             </v-dialog>
-            <!--Edit User Dialog-->
+            <!-- Edit User Dialog -->
             <v-dialog v-model="showEditUserDialog" max-width="600">
                 <v-form @submit.prevent >
                     <v-card>
@@ -550,6 +630,7 @@ onMounted(() => {
                     </v-card>
                 </v-form>
             </v-dialog>
+
              <!-- Add Equipment Dialog -->
             <v-dialog v-model="showAddEquipmentDialog" max-width="600">
                 <v-form @submit.prevent >
@@ -573,7 +654,7 @@ onMounted(() => {
                            
                              <v-row>
                                 <v-col md="6">
-                                    <v-text-field label="Model Number" v-model="modelNo" required :rules="[rules.required]"></v-text-field>
+                                    <v-text-field label="Model Number" v-model="model_no" required :rules="[rules.required]"></v-text-field>
                                 </v-col>
                                 <v-col md="6">
                                     <v-text-field label="Value" v-model="equipmentValue" required :rules="[rules.required]"></v-text-field>
@@ -583,7 +664,7 @@ onMounted(() => {
                                 <v-col md="6">
                                     <v-text-field label="Status" v-model="status" required :rules="[rules.required]"></v-text-field>
                                 </v-col>
-                             </v-row>                    
+                            </v-row>
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
@@ -593,13 +674,59 @@ onMounted(() => {
                     </v-card>
                 </v-form>
             </v-dialog>
-               <!-- Add Role Dialog -->
-            <v-dialog v-model="showAddEquipmentDialog" max-width="600">
+
+             <!-- Edit Equipment Dialog -->
+            <v-dialog v-model="showEditEquipmentDialog" max-width="600">
                 <v-form @submit.prevent >
                     <v-card>
                         <v-card-title class="pa-6">
                         <v-row>
-                                Add Role
+                                Edit Equipment
+                                <v-spacer></v-spacer>
+                                <v-btn class="ma-2" color="blue-darken-2" icon="mdi-close" @click="close();"></v-btn>
+                            </v-row>
+                        </v-card-title>
+                        <v-card-text>
+                            <v-row dense>
+                                <v-col >
+                                    <v-text-field label="Name" v-model="equipmentName" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                            </v-row>
+                            
+                             <v-row>
+                                <v-col md="6">
+                                    <v-text-field  label="Usage" v-model="usage" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                                <v-col md="6">
+                                    <v-text-field label="Model Number" v-model="model_no" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                            </v-row>
+                            <v-row>
+                                <v-col md="6">
+                                    <v-text-field label="Value" v-model="equipmentValue" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                                <v-col md="6">
+                                     <v-text-field label="Status" v-model="status" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                            </v-row>
+                           
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn text="Close" variant="plain" @click="close()" ></v-btn>
+                            <v-btn color="primary" type="submit" text="Update" variant="tonal" @click="updateEquipment()" ></v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-form>
+            </v-dialog>
+
+            <!-- Add role Dialog -->
+            <v-dialog v-model="showAddRoleDialog" max-width="600">
+                <v-form @submit.prevent >
+                    <v-card>
+                        <v-card-title class="pa-6">
+                        <v-row>
+                                Add role
                                 <v-spacer></v-spacer>
                                 <v-btn class="ma-2" color="blue-darken-2" icon="mdi-close" @click="close();"></v-btn>
                             </v-row>
@@ -609,19 +736,21 @@ onMounted(() => {
                                 <v-col md="6">
                                     <v-text-field label="Name" v-model="roleName" required :rules="[rules.required]"></v-text-field>
                                 </v-col>
+
                                 <v-col md="6">
-                                    <v-text-field label="description" v-model="description" required :rules="[rules.required]"></v-text-field>
+                                    <v-text-field label="Description" v-model="description" required :rules="[rules.required]"></v-text-field>
                                 </v-col>
+                                <!-- <v-col md="6">
+                                    <v-text-field label="Abilities" v-model="abilities" required :rules="[rules.required]"></v-text-field>
+                                </v-col> -->
                             </v-row>
                            
-                             <v-row>
+                             <!-- <v-row>
                                 <v-col md="6">
-                                    <v-text-field label="created_at" v-model="created_at" required :rules="[rules.required]"></v-text-field>
+                                    <v-text-field label="Number of Users" v-model="noOfUsers" required :rules="[rules.required]"></v-text-field>
                                 </v-col>
-                                <v-col md="6">
-                                    <v-text-field label="updated_at" v-model="updated_at" required :rules="[rules.required]"></v-text-field>
-                                </v-col>
-                            </v-row>
+                                
+                            </v-row> -->
                         </v-card-text>
                         <v-card-actions>
                             <v-spacer></v-spacer>
@@ -631,5 +760,41 @@ onMounted(() => {
                     </v-card>
                 </v-form>
             </v-dialog>
-</template>
+
+             <!-- Edit Role Dialog -->
+            <v-dialog v-model="showEditRoleDialog" max-width="600">
+                <v-form @submit.prevent >
+                    <v-card>
+                        <v-card-title class="pa-6">
+                        <v-row>
+                                Edit Role
+                                <v-spacer></v-spacer>
+                                <v-btn class="ma-2" color="blue-darken-2" icon="mdi-close" @click="close();"></v-btn>
+                            </v-row>
+                        </v-card-title>
+                        <v-card-text>
+                            <v-row dense>
+                                <v-col >
+                                     <v-text-field label="Name" v-model="roleName" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                            </v-row>
                             
+                             <v-row>
+                                <v-col md="6">
+                                   <v-text-field label="Description" v-model="description" required :rules="[rules.required]"></v-text-field>
+                                </v-col>
+                            </v-row>
+                            
+                            
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn text="Close" variant="plain" @click="close()" ></v-btn>
+                            <v-btn color="primary" type="submit" text="Update" variant="tonal" @click="updateRole()" ></v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-form>
+            </v-dialog>
+
+
+</template>
